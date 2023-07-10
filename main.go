@@ -17,6 +17,8 @@ import (
 	"github.com/gofiber/session/v2"
 	"gocart/v2/auth"
 	"gocart/v2/routes"
+
+	"fmt"
 )
 
 var (
@@ -79,9 +81,7 @@ func main() {
 	// Middleware that checks for a valid session on every request
 	app.Use(func(c *fiber.Ctx) error {
 		sess := sessionMiddleware.Get(c)	
-		defer sess.Save()
-		// check the shit
-		// pass to the next middleware and shit
+		fmt.Println(sess.Get("user"))
 		return c.Next()
 		
 	})

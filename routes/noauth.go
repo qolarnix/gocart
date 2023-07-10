@@ -31,7 +31,7 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
 			})
 		}
 	
-		_, err := sm.Login(loginReq.Email, loginReq.Password)
+		userSession, err := sm.Login(loginReq.Email, loginReq.Password)
     	if err != nil {
     	    return c.Render("login", fiber.Map{
     	        "title":          "GoCart - Login",
@@ -43,7 +43,7 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
 	
 		sess := sessionMiddleware.Get(c)
 
-		sess.Set("something", "some value")
+		sess.Set("user", userSession.Email)
 	 
 		if err := sess.Save(); err != nil {
 			fmt.Println(err)
