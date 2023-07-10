@@ -20,7 +20,7 @@ func SetupAuthRoutes(app fiber.Router, sessionMiddleware *session.Session) {
 		return AuthRequired(sessionMiddleware, c)
 	})
 
-	app.Get("/dash", func(c *fiber.Ctx) error {
+	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("You're in.. Good job..")
 	})
 }
