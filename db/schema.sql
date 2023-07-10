@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    userID TEXT NOT NULL,
+    data BLOB NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expiresAt DATETIME,
+    FOREIGN KEY(userID) REFERENCES users(id)
+);
