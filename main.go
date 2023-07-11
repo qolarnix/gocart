@@ -53,6 +53,7 @@ func main() {
 	// Create a new instance of the session middleware
 	sessionMiddleware := session.New(session.Config{
 		Expiration: 2 * time.Hour,
+		// CookieSecure: true,
 	})
 
 	// Create a new instance of SessionManager with the database connection
@@ -61,6 +62,8 @@ func main() {
 	}
 
 	engine := html.New("./html", ".html")
+	engine.Reload(true)
+	engine.Debug(true)
 
 	app := fiber.New(fiber.Config{
 		Views: engine,

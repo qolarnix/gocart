@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/session/v2"
+	"fmt"
 )
 
 func AuthRequired(sessionMiddleware *session.Session, c *fiber.Ctx) error {
@@ -20,7 +21,9 @@ func SetupAuthRoutes(app fiber.Router, sessionMiddleware *session.Session) {
 		return AuthRequired(sessionMiddleware, c)
 	})
 
-	app.Get("/dash", func(c *fiber.Ctx) error {
-		return c.SendString("You're in.. Good job..")
+	app.Get("/", func(c *fiber.Ctx) error {
+		session_key := sessionMiddleware.Get(c)
+
+		return c.SendString(fmt.Sprintf("You're in.. Good job.. \n\n%s", session_key))
 	})
 }

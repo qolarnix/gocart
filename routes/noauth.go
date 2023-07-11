@@ -41,12 +41,25 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
     	    })
     	}
 	
-		sess := sessionMiddleware.Get(c)
+		
+		// Destroy old session
+        oldSession := sessionMiddleware.Get(c)
+        if err := oldSession.Destroy(); err != nil {
+            panic(err)
+        }
 
-		sess.Set("user", userSession.Email)
+        sess := sessionMiddleware.Get(c)
+
+
+        sess.Regenerate()
+
+		fmt.Println("Session ID:" + userSession.ID)
+
+		
+		sess.Set("user", userSession.ID)
 	 
 		if err := sess.Save(); err != nil {
-			fmt.Println(err)
+			fmt.Println("Getting an error with: ", err)
 		}
 		 
 		// Go to the /dash authenticated
