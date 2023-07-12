@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/session/v2"
-	"fmt"
 )
 
 func AuthRequired(sessionMiddleware *session.Session, c *fiber.Ctx) error {
