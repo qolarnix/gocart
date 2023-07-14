@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"time"
+	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
@@ -21,9 +23,36 @@ import (
 	"fmt"
 )
 
-var (
-	port = flag.String("port", ":3000", "Port to listen on")
-)
+type Config struct {
+    Key string `db:"key"`
+    Value string `db:"value"`
+}
+
+// a map of valid environment variables 
+var validEnvVars = map[string]bool{
+	"HOST":         true,
+	"PORT":         true,
+	"REGISTRATION": true,
+}
+
+func updateConfigTableWithEnvVars(db *sqlx.DB) error {
+	envVars := os.Environ()
+	for _, envVar := range envVars {
+		pair := strings.SplitN(envVar, "=", 2)
+		key := pair[0]
+		value := pair[1]
+
+		// Check if the key is valid according to the schema
+		if _, isValid := validEnvVars[key]; isValid {
+			query := `INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)`
+			if _, err := db.Exec(query, key, value); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
 
 func main() {
 	flag.Parse()
@@ -47,6 +76,11 @@ func main() {
 	// Execute the SQL statements to create the tables
 	_, err = conn.Exec(string(schemaSQL))
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Update the config table with environment variables
+	if err := updateConfigTableWithEnvVars(conn); err != nil {
 		log.Fatal(err)
 	}
 
@@ -81,6 +115,22 @@ func main() {
 		StatusCode: 301,
 	}))
 
+	// Read all keys and values from the config table
+	var configValues []Config
+	err = conn.Select(&configValues, "SELECT key, value FROM config")
+	if err != nil {
+		log.Fatal("Failed to fetch configuration values from config table: ", err)
+	}
+
+	// Create a map to store the configuration values
+	configMap := make(map[string]string)
+	for _, cfg := range configValues {
+		configMap[cfg.Key] = cfg.Value
+	}
+
+	registrationEnabled := configMap["REGISTRATION"] == "true"
+	port := configMap["PORT"]
+
 	// Middleware that checks for a valid session on every request
 	app.Use(func(c *fiber.Ctx) error {
 		sess := sessionMiddleware.Get(c)	
@@ -89,9 +139,9 @@ func main() {
 		
 	})
 
-	routes.SetupNoauthRoutes(app.Group("/"), sessionManager, sessionMiddleware)
+	routes.SetupNoauthRoutes(app.Group("/"), sessionManager, sessionMiddleware, registrationEnabled)
 	routes.SetupAuthRoutes(app.Group("/dash"), sessionMiddleware)
 	routes.SetupApiRoutes(app.Group("/api"))
 
-	log.Fatal(app.Listen(*port))
+	log.Fatal(app.Listen(":" + port))
 }

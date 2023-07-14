@@ -13,3 +13,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     expiresAt DATETIME,
     FOREIGN KEY(userID) REFERENCES users(id)
 );
+CREATE TABLE IF NOT EXISTS config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
