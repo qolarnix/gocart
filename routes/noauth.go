@@ -13,14 +13,21 @@ import (
 	
 )
 
-
+func alreadyLoggedIn(sessionMiddleware *session.Session, c *fiber.Ctx) error {
+	sess := sessionMiddleware.Get(c)
+	_, ok := sess.Get("user").(string)
+	if ok {
+		// If user already logged in
+		return c.Redirect("/dash")
+	}
+	return c.Next()
+}
 
 func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddleware *session.Session, registrationEnabled bool) {
 
-
-	
-
 	app.Get("/login", func(c *fiber.Ctx) error {
+		return alreadyLoggedIn(sessionMiddleware, c)
+	}, func(c *fiber.Ctx) error {
 		return c.Render("login", fiber.Map{
 			"title": "GoCart - Login",
 		})
