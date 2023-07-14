@@ -20,7 +20,6 @@ import (
 	"gocart/v2/auth"
 	"gocart/v2/routes"
 
-	"fmt"
 )
 
 type Config struct {
@@ -56,7 +55,7 @@ func updateConfigTableWithEnvVars(db *sqlx.DB) error {
 
 func main() {
 	flag.Parse()
-
+	
 	// Initialize the database connection
 	db, err := sql.Open("sqlite3", "./db/database.db")
 	if err != nil {
@@ -131,12 +130,10 @@ func main() {
 	registrationEnabled := configMap["REGISTRATION"] == "true"
 	port := configMap["PORT"]
 
-	// Middleware that checks for a valid session on every request
 	app.Use(func(c *fiber.Ctx) error {
-		sess := sessionMiddleware.Get(c)	
-		fmt.Println(sess.Get("user"))
-		return c.Next()
+		log.Printf("Receive: Method: %s, Path: %s, IP: %s\n", c.Method(), c.Path(), c.IP())
 		
+		return c.Next()
 	})
 
 	routes.SetupNoauthRoutes(app.Group("/"), sessionManager, sessionMiddleware, registrationEnabled)

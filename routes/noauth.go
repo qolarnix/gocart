@@ -64,20 +64,13 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
         }
 
         sess := sessionMiddleware.Get(c)
-
-
         sess.Regenerate()
-
-		fmt.Println("Session ID:" + userSession.ID)
-
-		
 		sess.Set("user", userSession.ID)
 	 
 		if err := sess.Save(); err != nil {
 			fmt.Println("Getting an error with: ", err)
 		}
 		 
-		// Go to the /dash authenticated
 		return c.Redirect("/dash")
 	})
 	if registrationEnabled {
