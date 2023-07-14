@@ -7,6 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gocart/v2/auth"
 	"github.com/gofiber/session/v2"
+	"github.com/nbutton23/zxcvbn-go"
+	"net/mail"
 	// "github.com/gofiber/storage/memory"
 	
 )
@@ -66,6 +68,13 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
 		return c.Redirect("/dash")
 	})
 
+	app.Get("/register", func(c *fiber.Ctx) error {
+		return c.Render("register", fiber.Map{
+			"title": "GoCart - Register",
+		})
+	})
+
+	// register request, so we can strictly control the data that we work with.
 	type RegisterRequest struct {
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
@@ -73,27 +82,44 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
 		Password  string `json:"password"`
 	}
 
-	app.Get("/register", func(c *fiber.Ctx) error {
-		return c.Render("register", fiber.Map{
-			"title": "GoCart - Register",
-		})
-	})
-
 	app.Post("/register", func(c *fiber.Ctx) error {
 		var registerReq RegisterRequest
-		err := c.BodyParser(&registerReq)
-		if err != nil {
+		if err := c.BodyParser(&registerReq); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Error on request",
+				"message": "Bad request",
 			})
 		}
-
-		if registerReq.FirstName == "" || registerReq.LastName == "" || registerReq.Email == "" || registerReq.Password == "" {
+	
+		// Check all the fields are of type string and meet length requirements
+		if registerReq.FirstName == "" || len(registerReq.FirstName) > 16 ||
+			registerReq.LastName == "" || len(registerReq.LastName) > 16 ||
+			registerReq.Email == "" || len(registerReq.Email) > 30 ||
+			registerReq.Password == "" || len(registerReq.Password) > 64 {
 			return c.Render("register", fiber.Map{
 				"title": "GoCart - Register",
+				"errorMessage": "Invalid or out of length parameters. Please check your inputs and try again.",
 			})
 		}
-
+	
+		// Check if the email is valid
+		_, err := mail.ParseAddress(registerReq.Email)
+		if err != nil {
+			return c.Render("register", fiber.Map{
+				"title": "GoCart - Register",
+				"errorMessage": "Invalid email format. Please enter a valid email.",
+			})
+		}
+	
+		// Check password strength
+		userInputs := []string{registerReq.FirstName, registerReq.LastName, registerReq.Email}
+		strength := zxcvbn.PasswordStrength(registerReq.Password, userInputs)
+		if strength.Score < 3 {
+			return c.Render("register", fiber.Map{
+				"title":       "GoCart - Register",
+				"errorMessage": "Password too weak. Please use a stronger password.",
+			})
+		}
+	
 		err = sm.RegisterUser(registerReq.FirstName, registerReq.LastName, registerReq.Email, registerReq.Password)
 		if err != nil {
 			return c.Render("register", fiber.Map{
@@ -101,10 +127,9 @@ func SetupNoauthRoutes(app fiber.Router, sm *auth.SessionManager, sessionMiddlew
 				"errorMessage": fmt.Sprintf("Error registering user. Please try again.\n%s", err),
 			})
 		}
-
-		return c.Render("register", fiber.Map{
-			"title":          "GoCart - Register",
-			"successMessage": fmt.Sprintf("User %s successfully registered", registerReq.Email),
-		})
+	
+		return c.Redirect("/login")
 	})
+	
+	
 }
