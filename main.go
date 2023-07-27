@@ -15,11 +15,10 @@ import (
 	"github.com/gofiber/template/html/v2"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-
 	"github.com/gofiber/session/v2"
+
 	"gocart/v2/auth"
 	"gocart/v2/routes"
-
 )
 
 type Config struct {

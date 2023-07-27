@@ -2,15 +2,13 @@ package routes
 
 import (
 	"fmt"
-	//"time"
+	"net/mail"
 
 	"github.com/gofiber/fiber/v2"
-	"gocart/v2/auth"
 	"github.com/gofiber/session/v2"
 	"github.com/nbutton23/zxcvbn-go"
-	"net/mail"
-	// "github.com/gofiber/storage/memory"
-	
+
+	"gocart/v2/auth"
 )
 
 func alreadyLoggedIn(sessionMiddleware *session.Session, c *fiber.Ctx) error {
